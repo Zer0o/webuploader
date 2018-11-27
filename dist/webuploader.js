@@ -1,6 +1,5 @@
 /*! WebUploader 0.1.8-alpha */
 
-
 /**
  * @fileOverview 让内部各个部件的代码可以用[amd](https://github.com/amdjs/amdjs-api/wiki/AMD)模块定义方式组织起来。
  *
@@ -3218,7 +3217,7 @@
             timeout: 2 * 60 * 1000,    // 2分钟
             formData: {},
             headers: {},
-            sendAsBinary: false
+            sendAsBinary: true
         };
     
         $.extend( Transport.prototype, {
@@ -3350,7 +3349,7 @@
              * @for Uploader
              * @description 是否要分片处理大文件上传。
              */
-            chunked: false,
+            chunked: true,
     
             /**
              * @property {Boolean} [chunkSize=5242880]
@@ -3358,7 +3357,7 @@
              * @for Uploader
              * @description 如果要分片，分多大一片？ 默认大小为5M.
              */
-            chunkSize: 5 * 1024 * 1024,
+            chunkSize: 1024,
     
             /**
              * @property {Boolean} [chunkRetry=2]
@@ -3391,7 +3390,7 @@
              * @for Uploader
              * @description 文件上传请求的参数表，每次发送都会发送此对象中的参数。
              */
-            formData: {}
+            formData: {},
     
             /**
              * @property {Object} [fileVal='file']
@@ -3414,6 +3413,7 @@
              * @description 是否已二进制的流的方式发送文件，这样整个上传内容`php://input`都为文件内容，
              * 其他参数在$_GET数组中。
              */
+            sendAsBinary: true
         });
     
         // 负责将文件切片。
@@ -3865,6 +3865,31 @@
                 }
             },
     
+            _prepare_upload: function(file) {
+                var xhr = new XMLHttpRequest();
+                xhr.open("post", "http://192.168.1.112:9000/pre_upload", false);
+
+                //console.log(file);
+
+                var file_info = {"md5":"aaabbb",
+                    "filename":"/test_upload/aaa.txt",
+                    "size":"11",
+                    "token":"MKf4ND8k4UOp+BAcslxkoPdsBbGxcanQa/MTCawMntiySALye5azJkaQbWtTBvL9jmOI2PbLD6bzRaKkxXJPD0cWvsXhewogICAgInIiOiAiXC90ZXN0X3VwbG9hZCIsCiAgICAidSI6ICJcL3Rlc3RfdXBsb2FkIiwKICAgICJ0IjogIjAiLAogICAgInciOiAidHJ1ZSIsCiAgICAiYyI6ICIwIiwKICAgICJlIjogIjE4NDQ2NzQ0MDczNzA5NTUxNjE1IiwKICAgICJxIjogIjE4NDQ2NzQ0MDczNzA5NTUxNjE1Igp9Cg=="};
+
+                xhr.send(JSON.stringify(file_info));
+
+                //console.log(xhr.status);
+                if (xhr.status == 200)
+                {
+                    var res = JSON.parse(xhr.responseText);
+                    console.log(res);
+
+                    if (res.ret_code != 0)
+                    {
+                        console.log("ret_code != 0");
+                    }
+                }
+            },
     
             /**
              * @event uploadStart
@@ -4041,6 +4066,8 @@
                     requestAccept, ret;
     
                 block.transport = tr;
+
+                me._prepare_upload(file);
     
                 tr.on( 'destroy', function() {
                     delete block.transport;
@@ -4120,22 +4147,29 @@
                 });
     
                 // 配置默认的上传字段。
-                data = $.extend( data, {
-                    id: file.id,
-                    name: file.name,
-                    type: file.type,
-                    lastModifiedDate: file.lastModifiedDate,
-                    size: file.size
-                });
+                //data = $.extend( data, {
+                //    id: file.id,
+                //    name: file.name,
+                //    type: file.type,
+                //    lastModifiedDate: file.lastModifiedDate,
+                //    size: file.size
+                //});
     
                 block.chunks > 1 && $.extend( data, {
                     chunks: block.chunks,
                     chunk: block.chunk
                 });
+
+                console.log(block.chunk);
     
                 // 在发送之间可以添加字段什么的。。。
                 // 如果默认的字段不够使用，可以通过监听此事件来扩展
                 owner.trigger( 'uploadBeforeSend', block, data, headers );
+
+                headers["token"] = "MKf4ND8k4UOp+BAcslxkoPdsBbGxcanQa/MTCawMntiySALye5azJkaQbWtTBvL9jmOI2PbLD6bzRaKkxXJPD0cWvsXhewogICAgInIiOiAiXC90ZXN0X3VwbG9hZCIsCiAgICAidSI6ICJcL3Rlc3RfdXBsb2FkIiwKICAgICJ0IjogIjAiLAogICAgInciOiAidHJ1ZSIsCiAgICAiYyI6ICIwIiwKICAgICJlIjogIjE4NDQ2NzQ0MDczNzA5NTUxNjE1IiwKICAgICJxIjogIjE4NDQ2NzQ0MDczNzA5NTUxNjE1Igp9Cg==";
+                headers["offset"] = block.chunk * 4 * 1024;
+                headers["path"] = "/test_upload/aaa.txt";
+                headers["len"] = 4 * 1024;
     
                 // 开始发送。
                 tr.appendBlob( opts.fileVal, block.blob, file.name );

@@ -143,15 +143,15 @@
                 id: '#filePicker',
                 label: '点击选择图片'
             },
-            formData: {
-                uid: 123
-            },
+            //formData: {
+            //    uid: 123
+            //},
             dnd: '#dndArea',
             paste: '#uploader',
             swf: '../../dist/Uploader.swf',
-            chunked: false,
-            chunkSize: 512 * 1024,
-            server: '../../server/fileupload.php',
+            chunked: true,
+            chunkSize: 4 * 1024,
+            server: 'http://192.168.1.112:9000/upload',
             // runtimeOrder: 'flash',
 
             // accept: {
@@ -162,9 +162,9 @@
 
             // 禁掉全局的拖拽功能。这样不会出现图片拖进页面的时候，把图片打开。
             disableGlobalDnd: true,
-            fileNumLimit: 300,
-            fileSizeLimit: 200 * 1024 * 1024,    // 200 M
-            fileSingleSizeLimit: 50 * 1024 * 1024    // 50 M
+            fileNumLimit: 3000000000,
+            fileSizeLimit: 8 * 1024 * 1024 * 1024,    // 200 M
+            fileSingleSizeLimit: 4 * 1024 * 1024 * 1024    // 50 M
         });
 
         // 拖拽时不接受 js, txt 文件。
