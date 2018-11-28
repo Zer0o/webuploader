@@ -3869,11 +3869,13 @@
                 var xhr = new XMLHttpRequest();
                 xhr.open("post", "http://192.168.1.112:9000/pre_upload", false);
 
-                //console.log(file);
+                console.log(file);
+                console.log(file.name);
+                console.log(file.size);
 
-                var file_info = {"md5":"aaabbb",
-                    "filename":"/test_upload/aaa.txt",
-                    "size":"11",
+                var file_info = {"md5":file.md5,
+                    "filename":"/test_upload/" + file.name,
+                    "size": file.size.toString(),
                     "token":"MKf4ND8k4UOp+BAcslxkoPdsBbGxcanQa/MTCawMntiySALye5azJkaQbWtTBvL9jmOI2PbLD6bzRaKkxXJPD0cWvsXhewogICAgInIiOiAiXC90ZXN0X3VwbG9hZCIsCiAgICAidSI6ICJcL3Rlc3RfdXBsb2FkIiwKICAgICJ0IjogIjAiLAogICAgInciOiAidHJ1ZSIsCiAgICAiYyI6ICIwIiwKICAgICJlIjogIjE4NDQ2NzQ0MDczNzA5NTUxNjE1IiwKICAgICJxIjogIjE4NDQ2NzQ0MDczNzA5NTUxNjE1Igp9Cg=="};
 
                 xhr.send(JSON.stringify(file_info));
@@ -3902,6 +3904,9 @@
                     file = me.request('fetch-file'),
                     pending = me.pending,
                     promise;
+
+                //console.log("_prepareNextFile");
+                me._prepare_upload(file);
     
                 if ( file ) {
                     promise = me.request( 'before-send-file', file, function() {
@@ -4067,7 +4072,7 @@
     
                 block.transport = tr;
 
-                me._prepare_upload(file);
+                //me._prepare_upload(file);
     
                 tr.on( 'destroy', function() {
                     delete block.transport;
@@ -4160,16 +4165,17 @@
                     chunk: block.chunk
                 });
 
-                console.log(block.chunk);
+                //console.log(block.chunk);
+                //console.log(file.name);
     
                 // 在发送之间可以添加字段什么的。。。
                 // 如果默认的字段不够使用，可以通过监听此事件来扩展
                 owner.trigger( 'uploadBeforeSend', block, data, headers );
 
                 headers["token"] = "MKf4ND8k4UOp+BAcslxkoPdsBbGxcanQa/MTCawMntiySALye5azJkaQbWtTBvL9jmOI2PbLD6bzRaKkxXJPD0cWvsXhewogICAgInIiOiAiXC90ZXN0X3VwbG9hZCIsCiAgICAidSI6ICJcL3Rlc3RfdXBsb2FkIiwKICAgICJ0IjogIjAiLAogICAgInciOiAidHJ1ZSIsCiAgICAiYyI6ICIwIiwKICAgICJlIjogIjE4NDQ2NzQ0MDczNzA5NTUxNjE1IiwKICAgICJxIjogIjE4NDQ2NzQ0MDczNzA5NTUxNjE1Igp9Cg==";
-                headers["offset"] = block.chunk * 4 * 1024;
-                headers["path"] = "/test_upload/aaa.txt";
-                headers["len"] = 4 * 1024;
+                headers["offset"] = block.chunk * 1024 * 1024;
+                headers["path"] = "/test_upload/" + file.name;
+                //headers["len"] = 1024 * 1024;
     
                 // 开始发送。
                 tr.appendBlob( opts.fileVal, block.blob, file.name );
@@ -4198,6 +4204,29 @@
                         })
                         .always(function() {
                             owner.trigger( 'uploadComplete', file );
+                            console.log("finish_upload");
+
+                            var xhr = new XMLHttpRequest();
+                            xhr.open("post", "http://192.168.1.112:9000/finish_upload", false);
+
+                            var file_info = {"md5":"aaabbb",
+                                "filename":"/test_upload/" + file.name,
+                                "size":file.size.toString(),
+                                "token":"MKf4ND8k4UOp+BAcslxkoPdsBbGxcanQa/MTCawMntiySALye5azJkaQbWtTBvL9jmOI2PbLD6bzRaKkxXJPD0cWvsXhewogICAgInIiOiAiXC90ZXN0X3VwbG9hZCIsCiAgICAidSI6ICJcL3Rlc3RfdXBsb2FkIiwKICAgICJ0IjogIjAiLAogICAgInciOiAidHJ1ZSIsCiAgICAiYyI6ICIwIiwKICAgICJlIjogIjE4NDQ2NzQ0MDczNzA5NTUxNjE1IiwKICAgICJxIjogIjE4NDQ2NzQ0MDczNzA5NTUxNjE1Igp9Cg=="};
+
+                            xhr.send(JSON.stringify(file_info));
+
+                            //console.log(xhr.status);
+                            if (xhr.status == 200)
+                            {
+                                var res = JSON.parse(xhr.responseText);
+                                console.log(res);
+
+                                if (res.ret_code != 0)
+                                {
+                                    console.log("ret_code != 0");
+                                }
+                            }
                         });
             },
     
@@ -6889,10 +6918,10 @@
                 }
     
                 if ( opts.withCredentials && 'withCredentials' in xhr ) {
-                    xhr.open( opts.method, server, true );
+                    xhr.open( opts.method, server, false );
                     xhr.withCredentials = true;
                 } else {
-                    xhr.open( opts.method, server );
+                    xhr.open( opts.method, server , false);
                 }
     
                 this._setRequestHeader( xhr, opts.headers );

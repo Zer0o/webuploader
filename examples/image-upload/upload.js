@@ -150,7 +150,7 @@
             paste: '#uploader',
             swf: '../../dist/Uploader.swf',
             chunked: true,
-            chunkSize: 4 * 1024,
+            chunkSize: 1024 * 1024,
             server: 'http://192.168.1.112:9000/upload',
             // runtimeOrder: 'flash',
 
@@ -502,14 +502,35 @@
             fileCount++;
             fileSize += file.size;
 
-            if ( fileCount === 1 ) {
-                $placeHolder.addClass( 'element-invisible' );
-                $statusBar.show();
-            }
+            //if ( fileCount === 1 ) {
+            //    $placeHolder.addClass( 'element-invisible' );
+            //    $statusBar.show();
+            //}
 
-            addFile( file );
-            setState( 'ready' );
-            updateTotalProgress();
+            this.md5File(file)
+
+                // 可以用来监听进度
+                .progress(function(percentage) {
+                    // console.log('Percentage:', percentage);
+                })
+
+                // 处理完成后触发
+                .then(function(ret) {
+                    console.log('md5:', ret);
+                    file.md5 = ret;
+                    addFile( file );
+                    setState('ready');
+                    updateTotalProgress();
+
+                    if ( fileCount === 1 ) {
+                        $placeHolder.addClass( 'element-invisible' );
+                        $statusBar.show();
+                    }
+                });
+
+            //addFile( file );
+            //setState( 'ready' );
+            //updateTotalProgress();
         };
 
         uploader.onFileDequeued = function( file ) {
