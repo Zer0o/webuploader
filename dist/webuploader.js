@@ -3880,6 +3880,8 @@
 
                 xhr.send(JSON.stringify(file_info));
 
+                file.uploaded_size = 0;
+
                 //console.log(xhr.status);
                 if (xhr.status == 200)
                 {
@@ -3889,6 +3891,10 @@
                     if (res.ret_code != 0)
                     {
                         console.log("ret_code != 0");
+                    }
+                    else
+                    {
+                        file.uploaded_size = res.uploaded_size;
                     }
                 }
             },
@@ -3982,8 +3988,14 @@
                 // hook, 每个分片发送之前可能要做些异步的事情。
                 promise = me.request( 'before-send', block, function() {
     
+                    // 如果当前块大小比已经上传的大小小则跳过
+                    if (block.chunk * 1024 * 1024 < block.file.uploaded_size) {
+                        me._popBlock( block );
+                        Base.nextTick( me.__tick );
+                        block.percentage = 1;
+                        me.updateFileProgress( file );
                     // 有可能文件已经上传出错了，所以不需要再传输了。
-                    if ( file.getStatus() === Status.PROGRESS ) {
+                    } else if ( file.getStatus() === Status.PROGRESS ) {
                         me._doSend( block );
                     } else {
                         me._popBlock( block );
@@ -4165,12 +4177,20 @@
                     chunk: block.chunk
                 });
 
+
                 //console.log(block.chunk);
-                //console.log(file.name);
     
                 // 在发送之间可以添加字段什么的。。。
                 // 如果默认的字段不够使用，可以通过监听此事件来扩展
                 owner.trigger( 'uploadBeforeSend', block, data, headers );
+
+                console.log(file.uploaded_size);
+
+                if (block.chunk * 1024 * 1024 < file.uploaded_size)
+                {
+                    console.log("skip");
+                    return;
+                }
 
                 headers["token"] = "MKf4ND8k4UOp+BAcslxkoPdsBbGxcanQa/MTCawMntiySALye5azJkaQbWtTBvL9jmOI2PbLD6bzRaKkxXJPD0cWvsXhewogICAgInIiOiAiXC90ZXN0X3VwbG9hZCIsCiAgICAidSI6ICJcL3Rlc3RfdXBsb2FkIiwKICAgICJ0IjogIjAiLAogICAgInciOiAidHJ1ZSIsCiAgICAiYyI6ICIwIiwKICAgICJlIjogIjE4NDQ2NzQ0MDczNzA5NTUxNjE1IiwKICAgICJxIjogIjE4NDQ2NzQ0MDczNzA5NTUxNjE1Igp9Cg==";
                 headers["offset"] = block.chunk * 1024 * 1024;
@@ -4204,12 +4224,14 @@
                         })
                         .always(function() {
                             owner.trigger( 'uploadComplete', file );
+
+                            /*
                             console.log("finish_upload");
 
                             var xhr = new XMLHttpRequest();
                             xhr.open("post", "http://192.168.1.112:9000/finish_upload", false);
 
-                            var file_info = {"md5":"aaabbb",
+                            var file_info = {
                                 "filename":"/test_upload/" + file.name,
                                 "size":file.size.toString(),
                                 "token":"MKf4ND8k4UOp+BAcslxkoPdsBbGxcanQa/MTCawMntiySALye5azJkaQbWtTBvL9jmOI2PbLD6bzRaKkxXJPD0cWvsXhewogICAgInIiOiAiXC90ZXN0X3VwbG9hZCIsCiAgICAidSI6ICJcL3Rlc3RfdXBsb2FkIiwKICAgICJ0IjogIjAiLAogICAgInciOiAidHJ1ZSIsCiAgICAiYyI6ICIwIiwKICAgICJlIjogIjE4NDQ2NzQ0MDczNzA5NTUxNjE1IiwKICAgICJxIjogIjE4NDQ2NzQ0MDczNzA5NTUxNjE1Igp9Cg=="};
@@ -4227,6 +4249,7 @@
                                     console.log("ret_code != 0");
                                 }
                             }
+                            */
                         });
             },
     
@@ -4588,6 +4611,31 @@
                     end = Math.min( end, blob.size );
                     blob = blob.slice( start, end );
                 }
+                /*
+                else {
+                    //计算局部md5,每隔20M取256K计算
+                    var md5_slice_size = 256 * 1024;
+                    var skip_size = 20 * 1024 * 1024;
+                    var len = blob.size;
+                    var off = 0;
+                    while (off < len)
+                    {
+                        var left = len - off;
+                        left = left > md5_slice_size ? md5_slice_size : left;
+                        blob2 += blob.slice(off, off + left);
+
+                        off += skip_size;
+                    }
+
+                    //取最后256K
+                    if (len >= md5_slice_size)
+                    {
+                        blob2 += blob.slice(len - md5_slice_size, md5_slice_size);
+                    }
+                }
+
+                console.log(blob2);
+                */
     
                 md5.loadFromBlob( blob );
     
@@ -7646,9 +7694,11 @@
             },
     
             loadFromBlob: function( file ) {
+
                 var blob = file.getSource(),
-                    chunkSize = 2 * 1024 * 1024,
-                    chunks = Math.ceil( blob.size / chunkSize ),
+                    //chunkSize = 2 * 1024 * 1024,
+                    chunkSize = 20 * 1024 * 1024,
+                    chunks = Math.ceil( blob.size / chunkSize ) + 1,
                     chunk = 0,
                     owner = this.owner,
                     spark = new SparkMD5.ArrayBuffer(),
@@ -7661,8 +7711,19 @@
                 loadNext = function() {
                     var start, end;
     
-                    start = chunk * chunkSize;
-                    end = Math.min( start + chunkSize, blob.size );
+                    //start = chunk * chunkSize;
+                    //end = Math.min( start + chunkSize, blob.size );
+
+                    if ((chunk + 1) == chunks)
+                    {
+                        start = Math.max(0, blob.size - 256 * 1024);
+                        end = Math.max(blob.size - 256 * 1024, blob.size);
+                    }
+                    else
+                    {
+                        start = chunk * chunkSize;
+                        end = Math.min( start + 256 * 1024, blob.size );
+                    }
     
                     fr.onload = function( e ) {
                         spark.append( e.target.result );
