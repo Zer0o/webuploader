@@ -4184,17 +4184,9 @@
                 // 如果默认的字段不够使用，可以通过监听此事件来扩展
                 owner.trigger( 'uploadBeforeSend', block, data, headers );
 
-                console.log(file.uploaded_size);
-
-                if (block.chunk * 1024 * 1024 < file.uploaded_size)
-                {
-                    console.log("skip");
-                    return;
-                }
-
                 headers["token"] = "MKf4ND8k4UOp+BAcslxkoPdsBbGxcanQa/MTCawMntiySALye5azJkaQbWtTBvL9jmOI2PbLD6bzRaKkxXJPD0cWvsXhewogICAgInIiOiAiXC90ZXN0X3VwbG9hZCIsCiAgICAidSI6ICJcL3Rlc3RfdXBsb2FkIiwKICAgICJ0IjogIjAiLAogICAgInciOiAidHJ1ZSIsCiAgICAiYyI6ICIwIiwKICAgICJlIjogIjE4NDQ2NzQ0MDczNzA5NTUxNjE1IiwKICAgICJxIjogIjE4NDQ2NzQ0MDczNzA5NTUxNjE1Igp9Cg==";
                 headers["offset"] = block.chunk * 1024 * 1024;
-                headers["path"] = "/test_upload/" + file.name;
+                headers["path"] = encodeURI("/test_upload/" + file.name);
                 //headers["len"] = 1024 * 1024;
     
                 // 开始发送。
@@ -7698,8 +7690,13 @@
                 var blob = file.getSource(),
                     //chunkSize = 2 * 1024 * 1024,
                     chunkSize = 20 * 1024 * 1024,
-                    chunks = Math.ceil( blob.size / chunkSize ) + 1,
-                    chunk = 0,
+                    chunks = Math.ceil( blob.size / chunkSize );
+                    if (blob.size > 256 * 1024)
+                    {
+                        chunks += 1;
+                    }
+
+                    var chunk = 0,
                     owner = this.owner,
                     spark = new SparkMD5.ArrayBuffer(),
                     me = this,
