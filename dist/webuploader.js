@@ -2935,10 +2935,10 @@
                 }
     
                 // 类型不匹配，则派送错误事件，并返回。
-                if ( !me.acceptFile( file ) ) {
-                    me.owner.trigger( 'error', 'Q_TYPE_DENIED', file );
-                    return;
-                }
+                //if ( !me.acceptFile( file ) ) {
+                //    me.owner.trigger( 'error', 'Q_TYPE_DENIED', file );
+                //    return;
+                //}
     
                 me.queue.append( file );
                 me.owner.trigger( 'fileQueued', file );
@@ -3869,12 +3869,14 @@
                 var xhr = new XMLHttpRequest();
                 xhr.open("post", "http://192.168.1.112:9000/pre_upload", false);
 
+                //console.log("path");
+                console.log(path);
                 console.log(file);
                 console.log(file.name);
                 console.log(file.size);
 
                 var file_info = {"md5":file.md5,
-                    "filename":"/test_upload/" + file.name,
+                    "filename":path + "/" + file.name,
                     "size": file.size.toString(),
                     "token":"MKf4ND8k4UOp+BAcslxkoPdsBbGxcanQa/MTCawMntiySALye5azJkaQbWtTBvL9jmOI2PbLD6bzRaKkxXJPD0cWvsXhewogICAgInIiOiAiXC90ZXN0X3VwbG9hZCIsCiAgICAidSI6ICJcL3Rlc3RfdXBsb2FkIiwKICAgICJ0IjogIjAiLAogICAgInciOiAidHJ1ZSIsCiAgICAiYyI6ICIwIiwKICAgICJlIjogIjE4NDQ2NzQ0MDczNzA5NTUxNjE1IiwKICAgICJxIjogIjE4NDQ2NzQ0MDczNzA5NTUxNjE1Igp9Cg=="};
 
@@ -3912,6 +3914,7 @@
                     promise;
 
                 //console.log("_prepareNextFile");
+                console.log(this.path);
                 me._prepare_upload(file);
     
                 if ( file ) {
@@ -4186,7 +4189,7 @@
 
                 headers["token"] = "MKf4ND8k4UOp+BAcslxkoPdsBbGxcanQa/MTCawMntiySALye5azJkaQbWtTBvL9jmOI2PbLD6bzRaKkxXJPD0cWvsXhewogICAgInIiOiAiXC90ZXN0X3VwbG9hZCIsCiAgICAidSI6ICJcL3Rlc3RfdXBsb2FkIiwKICAgICJ0IjogIjAiLAogICAgInciOiAidHJ1ZSIsCiAgICAiYyI6ICIwIiwKICAgICJlIjogIjE4NDQ2NzQ0MDczNzA5NTUxNjE1IiwKICAgICJxIjogIjE4NDQ2NzQ0MDczNzA5NTUxNjE1Igp9Cg==";
                 headers["offset"] = block.chunk * 1024 * 1024;
-                headers["path"] = encodeURI("/test_upload/" + file.name);
+                headers["path"] = encodeURI(path + "/" + file.name);
                 //headers["len"] = 1024 * 1024;
     
                 // 开始发送。

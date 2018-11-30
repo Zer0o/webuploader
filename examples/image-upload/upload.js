@@ -137,6 +137,17 @@
             return;
         }
 
+        var url = window.location.href;
+        var idx = url.indexOf('=');
+
+        if (idx == -1)
+        {
+            console.log("param error");
+        }
+
+        path = url.substring(idx+1);
+        console.log(path);
+
         // 实例化
         uploader = WebUploader.create({
             pick: {
@@ -152,6 +163,7 @@
             chunked: true,
             chunkSize: 1024 * 1024,
             server: 'http://192.168.1.112:9000/upload',
+            path: path,
             // runtimeOrder: 'flash',
 
             // accept: {
@@ -477,7 +489,8 @@
                 case 'finish':
                     stats = uploader.getStats();
                     if ( stats.successNum ) {
-                        alert( '上传成功' );
+                        //alert( '上传成功' );
+                        location.href = "http://192.168.1.112:9000/webuploader/examples/image-upload/dir.html?path=" + path;
                     } else {
                         // 没有成功的图片，重设
                         state = 'done';
