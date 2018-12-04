@@ -138,15 +138,47 @@
         }
 
         var url = window.location.href;
-        var idx = url.indexOf('=');
-
-        if (idx == -1)
+        var args = url.split("?");
+        token = "";
+        path = "";
+        if (args[0] == url)
         {
-            console.log("param error");
+            console.log("params empty");
+        }
+        else
+        {
+            var str = args[1];
+            var args = str.split("&");
+            for (var i = 0; i < args.length; ++i)
+            {
+                str = args[i];
+                var idx = str.indexOf('=');
+                if (idx == -1)
+                {
+                    continue;
+                }
+
+                var arg0 = str.substring(0, idx);
+                var arg1 = str.substring(idx+1);
+
+                if (arg0 == "token") token = arg1;
+                //else if (arg0 == "t2") t2 = arg1;
+                else if (arg0 == "path") path = arg1;
+            }
         }
 
-        path = url.substring(idx+1);
+        //var url = window.location.href;
+        //var idx = url.indexOf('=');
+
+        //if (idx == -1)
+        //{
+        //    console.log("param error");
+        //}
+
+        //path = url.substring(idx+1);
+        //token = "MKf4ND8k4UOp+BAcslxkoPdsBbGxcanQa/MTCawMntiySALye5azJkaQbWtTBvL9jmOI2PbLD6bzRaKkxXJPD0cWvsXhewogICAgInIiOiAiXC90ZXN0X3VwbG9hZCIsCiAgICAidSI6ICJcL3Rlc3RfdXBsb2FkIiwKICAgICJ0IjogIjAiLAogICAgInciOiAidHJ1ZSIsCiAgICAiYyI6ICIwIiwKICAgICJlIjogIjE4NDQ2NzQ0MDczNzA5NTUxNjE1IiwKICAgICJxIjogIjE4NDQ2NzQ0MDczNzA5NTUxNjE1Igp9Cg==";
         console.log(path);
+        console.log(token);
 
         // 实例化
         uploader = WebUploader.create({
@@ -164,6 +196,7 @@
             chunkSize: 1024 * 1024,
             server: 'http://192.168.1.112:9000/upload',
             path: path,
+            token:"MKf4ND8k4UOp+BAcslxkoPdsBbGxcanQa/MTCawMntiySALye5azJkaQbWtTBvL9jmOI2PbLD6bzRaKkxXJPD0cWvsXhewogICAgInIiOiAiXC90ZXN0X3VwbG9hZCIsCiAgICAidSI6ICJcL3Rlc3RfdXBsb2FkIiwKICAgICJ0IjogIjAiLAogICAgInciOiAidHJ1ZSIsCiAgICAiYyI6ICIwIiwKICAgICJlIjogIjE4NDQ2NzQ0MDczNzA5NTUxNjE1IiwKICAgICJxIjogIjE4NDQ2NzQ0MDczNzA5NTUxNjE1Igp9Cg==",
             // runtimeOrder: 'flash',
 
             // accept: {
@@ -490,7 +523,7 @@
                     stats = uploader.getStats();
                     if ( stats.successNum ) {
                         //alert( '上传成功' );
-                        location.href = "http://192.168.1.112:9000/webuploader/examples/image-upload/dir.html?path=" + path;
+                        location.href = "http://192.168.1.112:9000/webuploader/examples/image-upload/dir.html?path=" + path + "&token=" + token;
                     } else {
                         // 没有成功的图片，重设
                         state = 'done';

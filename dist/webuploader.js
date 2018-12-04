@@ -3869,8 +3869,8 @@
                 var xhr = new XMLHttpRequest();
                 xhr.open("post", "http://192.168.1.112:9000/pre_upload", false);
 
-                //console.log("path");
                 console.log(path);
+                console.log(token);
                 console.log(file);
                 console.log(file.name);
                 console.log(file.size);
@@ -3878,7 +3878,7 @@
                 var file_info = {"md5":file.md5,
                     "filename":path + "/" + file.name,
                     "size": file.size.toString(),
-                    "token":"MKf4ND8k4UOp+BAcslxkoPdsBbGxcanQa/MTCawMntiySALye5azJkaQbWtTBvL9jmOI2PbLD6bzRaKkxXJPD0cWvsXhewogICAgInIiOiAiXC90ZXN0X3VwbG9hZCIsCiAgICAidSI6ICJcL3Rlc3RfdXBsb2FkIiwKICAgICJ0IjogIjAiLAogICAgInciOiAidHJ1ZSIsCiAgICAiYyI6ICIwIiwKICAgICJlIjogIjE4NDQ2NzQ0MDczNzA5NTUxNjE1IiwKICAgICJxIjogIjE4NDQ2NzQ0MDczNzA5NTUxNjE1Igp9Cg=="};
+                    "token":token};
 
                 xhr.send(JSON.stringify(file_info));
 
@@ -4187,7 +4187,7 @@
                 // 如果默认的字段不够使用，可以通过监听此事件来扩展
                 owner.trigger( 'uploadBeforeSend', block, data, headers );
 
-                headers["token"] = "MKf4ND8k4UOp+BAcslxkoPdsBbGxcanQa/MTCawMntiySALye5azJkaQbWtTBvL9jmOI2PbLD6bzRaKkxXJPD0cWvsXhewogICAgInIiOiAiXC90ZXN0X3VwbG9hZCIsCiAgICAidSI6ICJcL3Rlc3RfdXBsb2FkIiwKICAgICJ0IjogIjAiLAogICAgInciOiAidHJ1ZSIsCiAgICAiYyI6ICIwIiwKICAgICJlIjogIjE4NDQ2NzQ0MDczNzA5NTUxNjE1IiwKICAgICJxIjogIjE4NDQ2NzQ0MDczNzA5NTUxNjE1Igp9Cg==";
+                headers["token"] = token;
                 headers["offset"] = block.chunk * 1024 * 1024;
                 headers["path"] = encodeURI(path + "/" + file.name);
                 //headers["len"] = 1024 * 1024;
@@ -4356,6 +4356,7 @@
                 }
     
                 return count >= max ? false : true;
+                return true;
             });
     
             uploader.on( 'fileQueued', function() {
@@ -4400,7 +4401,8 @@
                     }, 1 );
                 }
     
-                return invalid ? false : true;
+                //return invalid ? false : true;
+                return true;
             });
     
             uploader.on( 'fileQueued', function( file ) {
@@ -4433,11 +4435,11 @@
     
             uploader.on( 'beforeFileQueued', function( file ) {
     
-                if ( file.size > max ) {
-                    file.setStatus( WUFile.Status.INVALID, 'exceed_size' );
-                    this.trigger( 'error', 'F_EXCEED_SIZE', max, file );
-                    return false;
-                }
+                //if ( file.size > max ) {
+                //    file.setStatus( WUFile.Status.INVALID, 'exceed_size' );
+                //    this.trigger( 'error', 'F_EXCEED_SIZE', max, file );
+                //    return false;
+                //}
     
             });
     

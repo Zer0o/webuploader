@@ -9,7 +9,7 @@
 
 <script>
 function addRow(name, url, isdir,
-    size, size_string, date_modified, date_modified_string, path, path2) {
+    size, size_string, date_modified, date_modified_string, path, path2, t1, t2) {
   //if (name == "." || name == "..")
   //  return;
 
@@ -26,7 +26,7 @@ function addRow(name, url, isdir,
 
   if (isdir) {
     //url = "http://192.168.1.112:9000/webuploader/examples/image-upload/dir.html?path=" + path + "/" + name;
-    url = "http://192.168.1.112:9000/webuploader/examples/image-upload/dir.html?path=" + path;
+    url = "http://192.168.1.112:9000/webuploader/examples/image-upload/dir.html?path=" + path + "&token=" + t1;
     name = name + "/";
     //url = url + "/";
     size = 0;
@@ -53,11 +53,11 @@ function addRow(name, url, isdir,
   console.log(url);
   if (name == "../")
   {
-    link3.href = "javascript:upload('" +  path2 + "')";
+    link3.href = "javascript:upload('" +  path2 + "','" + t1 + "')";
   }
   else
   {
-    link3.href = "javascript:upload('" +  path + "')";
+    link3.href = "javascript:upload('" +  path + "','" + t1 + "')";
   }
   cell3.dataset.value = "上传";
   cell3.appendChild(link3);
@@ -68,11 +68,11 @@ function addRow(name, url, isdir,
   link4.innerText = "新建文件夹";
   if (name == "../")
   {
-    link4.href = "javascript:mkdir('" +  path2 + "')";
+    link4.href = "javascript:mkdir('" +  path2 + "','" + t1 + "')";
   }
   else
   {
-    link4.href = "javascript:mkdir('" +  path + "')";
+    link4.href = "javascript:mkdir('" +  path + "','" + t1 + "')";
   }
   cell4.dataset.value = "新建文件夹";
   cell4.appendChild(link4);
@@ -83,11 +83,11 @@ function addRow(name, url, isdir,
   link2.innerText = "删除";
   if (isdir)
   {
-    link2.href = "javascript:onFileDelete('" +  path + "')";
+    link2.href = "javascript:onFileDelete('" +  path + "','" + t1 + "')";
   }
   else
   {
-    link2.href = "javascript:onFileDelete('" +  path + "/" + name + "')";
+    link2.href = "javascript:onFileDelete('" +  path + "/" + name + "','" + t1 + "')";
   }
   cell2.dataset.value = "删除";
   cell2.appendChild(link2);
@@ -96,12 +96,12 @@ function addRow(name, url, isdir,
   tbody.appendChild(row);
 }
 
-function onFileDelete(filename) {
+function onFileDelete(filename, token) {
     var xhr = new XMLHttpRequest();
     xhr.open("post", "http://192.168.1.112:9000/rm", false);
     var file_info = {
         "filename": filename,
-        "token":"MKf4ND8k4UOp+BAcslxkoPdsBbGxcanQa/MTCawMntiySALye5azJkaQbWtTBvL9jmOI2PbLD6bzRaKkxXJPD0cWvsXhewogICAgInIiOiAiXC90ZXN0X3VwbG9hZCIsCiAgICAidSI6ICJcL3Rlc3RfdXBsb2FkIiwKICAgICJ0IjogIjAiLAogICAgInciOiAidHJ1ZSIsCiAgICAiYyI6ICIwIiwKICAgICJlIjogIjE4NDQ2NzQ0MDczNzA5NTUxNjE1IiwKICAgICJxIjogIjE4NDQ2NzQ0MDczNzA5NTUxNjE1Igp9Cg=="};
+        "token":token};
 
     xhr.send(JSON.stringify(file_info));
     console.log(xhr.status);
@@ -130,11 +130,11 @@ function onFileDelete(filename) {
     //console.log(filename);
 }
 
-function upload(path) {
-    location.href = "http://192.168.1.112:9000/webuploader/examples/image-upload/?path=" + path;
+function upload(path, token) {
+    location.href = "http://192.168.1.112:9000/webuploader/examples/image-upload/?path=" + path + "&token=" + token;
 }
 
-function mkdir(path) {
+function mkdir(path, token) {
     console.log(path);
     var name = prompt("请输入文件夹名","xxx"); // 弹出input框
     console.log(name);
@@ -143,7 +143,7 @@ function mkdir(path) {
     xhr.open("post", "http://192.168.1.112:9000/mkdir", false);
     var file_info = {
         "dir":path + "/" + name,
-        "token":"MKf4ND8k4UOp+BAcslxkoPdsBbGxcanQa/MTCawMntiySALye5azJkaQbWtTBvL9jmOI2PbLD6bzRaKkxXJPD0cWvsXhewogICAgInIiOiAiXC90ZXN0X3VwbG9hZCIsCiAgICAidSI6ICJcL3Rlc3RfdXBsb2FkIiwKICAgICJ0IjogIjAiLAogICAgInciOiAidHJ1ZSIsCiAgICAiYyI6ICIwIiwKICAgICJlIjogIjE4NDQ2NzQ0MDczNzA5NTUxNjE1IiwKICAgICJxIjogIjE4NDQ2NzQ0MDczNzA5NTUxNjE1Igp9Cg=="};
+        "token":token};
 
     xhr.send(JSON.stringify(file_info));
     console.log(xhr.status);
@@ -357,21 +357,53 @@ function sortTable(column) {
 
 <script>
     var url = window.location.href;
-    var idx = url.indexOf('=');
-
-    if (idx == -1)
+    var args = url.split("?");
+    var t1 = "";
+    //var t2 = "";
+    var path = "";
+    if (args[0] == url)
     {
-        console.log("param error");
+        console.log("params empty");
+    }
+    else
+    {
+        var str = args[1];
+        var args = str.split("&");
+        for (var i = 0; i < args.length; ++i)
+        {
+            str = args[i];
+            var idx = str.indexOf('=');
+            if (idx == -1)
+            {
+                continue;
+            }
+
+            var arg0 = str.substring(0, idx);
+            var arg1 = str.substring(idx+1);
+
+            if (arg0 == "token") t1 = arg1;
+            //else if (arg0 == "t2") t2 = arg1;
+            else if (arg0 == "path") path = arg1;
+        }
     }
 
-    path = url.substring(idx+1);
-    console.log(path);
+    //var idx = url.indexOf('=');
+
+    //if (idx == -1)
+    //{
+    //    console.log("param error");
+    //}
+
+    //path = url.substring(idx+1);
+    //console.log(path);
 
     var xhr = new XMLHttpRequest();
     xhr.open("post", "http://192.168.1.112:9000/dir", false);
+    //xhr.open("post", "http://192.168.1.112:15006/dir", false);
     var file_info = {
         "dir":path,
-        "token":"MKf4ND8k4UOp+BAcslxkoPdsBbGxcanQa/MTCawMntiySALye5azJkaQbWtTBvL9jmOI2PbLD6bzRaKkxXJPD0cWvsXhewogICAgInIiOiAiXC90ZXN0X3VwbG9hZCIsCiAgICAidSI6ICJcL3Rlc3RfdXBsb2FkIiwKICAgICJ0IjogIjAiLAogICAgInciOiAidHJ1ZSIsCiAgICAiYyI6ICIwIiwKICAgICJlIjogIjE4NDQ2NzQ0MDczNzA5NTUxNjE1IiwKICAgICJxIjogIjE4NDQ2NzQ0MDczNzA5NTUxNjE1Igp9Cg=="};
+        "token":t1};
+        //"token":"MKf4ND8k4UOp+BAcslxkoPdsBbGxcanQa/MTCawMntiySALye5azJkaQbWtTBvL9jmOI2PbLD6bzRaKkxXJPD0cWvsXhewogICAgInIiOiAiXC90ZXN0X3VwbG9hZCIsCiAgICAidSI6ICJcL3Rlc3RfdXBsb2FkIiwKICAgICJ0IjogIjAiLAogICAgInciOiAidHJ1ZSIsCiAgICAiYyI6ICIwIiwKICAgICJlIjogIjE4NDQ2NzQ0MDczNzA5NTUxNjE1IiwKICAgICJxIjogIjE4NDQ2NzQ0MDczNzA5NTUxNjE1Igp9Cg=="};
 
     xhr.send(JSON.stringify(file_info));
     console.log(xhr.status);
@@ -392,19 +424,27 @@ function sortTable(column) {
             var lp;
             if (li == -1 || li == 0)
             {
-                lp = path;
+                lp = "/";
             }
             else
             {
                 lp = path.substr(0, li);
             }
 
-            addRow("..", path, true, 0, "0", 0, "0", lp, path);
+            addRow("..", path, true, 0, "0", 0, "0", lp, path, t1);
             for (var idx in res.file_list) {
                 var f = res.file_list[idx];
-                var f_url = "http://192.168.1.112:15006" + path + "/" + encodeURI(f.name) + "?token=MKf4ND8k4UOp+BAcslxkoPdsBbGxcanQa/MTCawMntiySALye5azJkaQbWtTBvL9jmOI2PbLD6bzRaKkxXJPD0cWvsXhewogICAgInIiOiAiXC90ZXN0X3VwbG9hZCIsCiAgICAidSI6ICJcL3Rlc3RfdXBsb2FkIiwKICAgICJ0IjogIjAiLAogICAgInciOiAidHJ1ZSIsCiAgICAiYyI6ICIwIiwKICAgICJlIjogIjE4NDQ2NzQ0MDczNzA5NTUxNjE1IiwKICAgICJxIjogIjE4NDQ2NzQ0MDczNzA5NTUxNjE1Igp9Cg==";
+                //var f_url = "http://192.168.1.112:15006" + path + "/" + encodeURI(f.name) + "?token=MKf4ND8k4UOp+BAcslxkoPdsBbGxcanQa/MTCawMntiySALye5azJkaQbWtTBvL9jmOI2PbLD6bzRaKkxXJPD0cWvsXhewogICAgInIiOiAiXC90ZXN0X3VwbG9hZCIsCiAgICAidSI6ICJcL3Rlc3RfdXBsb2FkIiwKICAgICJ0IjogIjAiLAogICAgInciOiAidHJ1ZSIsCiAgICAiYyI6ICIwIiwKICAgICJlIjogIjE4NDQ2NzQ0MDczNzA5NTUxNjE1IiwKICAgICJxIjogIjE4NDQ2NzQ0MDczNzA5NTUxNjE1Igp9Cg==";
+                var f_url = "http://192.168.1.112:15006" + path + "/" + encodeURI(f.name) + "?token=" + t1;
+                var pp = path;
+                if (pp != "/")
+                {
+                    pp += "/";
+                }
+
+                pp += f.name;
                 addRow(f.name, f_url, f.file_type == "dir",
-    f.size, f.size.toString(), f.create_time, f.create_time.toString(), f.file_type == "dir" ? path + "/" + f.name : path);
+    f.size, f.size.toString(), f.create_time, f.create_time.toString(), f.file_type == "dir" ? pp : pp, "", t1);
                 //addRow(f.name, url, isdir,
     //size, size_string, date_modified, date_modified_string);
             }
